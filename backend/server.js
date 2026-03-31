@@ -10,91 +10,68 @@ app.use(express.json());
 const db = mysql.createConnection({
   host: "localhost",
   user: "root",
-  password: "root", // 👉 put your MySQL password
+  password: "root", // 🔴 replace this
   database: "taskdb"
 });
 
-// connect
 db.connect(err => {
-  if (err) {
-    console.log(err);
-  } else {
-    console.log("MySQL Connected...");
-  }
+  if (err) throw err;
+  console.log("MySQL Connected...");
 });
 
-// ================= USERS =================
-
-// signup
+// ---------------- SIGNUP ----------------
 app.post("/signup", (req, res) => {
   const { username, password } = req.body;
 
-  db.query(
-    "INSERT INTO users (username, password) VALUES (?, ?)",
-    [username, password],
-    (err, result) => {
-      if (err) throw err;
-      res.send("User registered");
-    }
-  );
-});
-
-// login
-app.post("/login", (req, res) => {
-  const { username, password } = req.body;
-
-  db.query(
-    "SELECT * FROM users WHERE username=? AND password=?",
-    [username, password],
-    (err, result) => {
-      if (err) throw err;
-
-      if (result.length > 0) {
-        res.json({ success: true });
-      } else {
-        res.json({ success: false });
-      }
-    }
-  );
-});
-
-// ================= TASKS =================
-
-// get tasks
-app.get("/tasks", (req, res) => {
-  db.query("SELECT * FROM tasks", (err, result) => {
-    if (err) throw err;
-    res.json(result);
+  const sql = "INSERT INTO users (username, password) VALUES (?, ?)";
+  db.query(sql, [username, password], (err, result) => {
+    if (err) return res.send(err);
+    res.json({ message: "User registered!" });
   });
 });
 
-// add task
+// ---------------- LOGIN ----------------
+app.post("/login", (req, res) => {
+  const { username, password } = req.body;
+
+  const sql = "SELECT * FROM users WHERE username=? AND password=?";
+  db.query(sql, [username, password], (err, results) => {
+    if (err) return res.send(err);
+
+    if (results.length > 0) {
+      res.json({
+        message: "Login successful",
+        userId: results[0].id   // ✅ IMPORTANT
+      });
+    } else {
+      res.json({ message: "Invalid credentials" });
+    }
+  });
+});
+
+// ---------------- ADD TASK ----------------
 app.post("/tasks", (req, res) => {
-  const { title } = req.body;
+  const { title, userId } = req.body;
 
-  db.query(
-    "INSERT INTO tasks (title, completed) VALUES (?, false)",
-    [title],
-    (err, result) => {
-      if (err) throw err;
-      res.send("Task added");
-    }
-  );
+  const sql = "INSERT INTO tasks (title, completed, user_id) VALUES (?, ?, ?)";
+  db.query(sql, [title, 0, userId], (err, result) => {
+    if (err) return res.send(err);
+    res.json({ message: "Task added!" });
+  });
 });
 
-// delete task
-app.delete("/tasks/:id", (req, res) => {
-  db.query(
-    "DELETE FROM tasks WHERE id=?",
-    [req.params.id],
-    (err, result) => {
-      if (err) throw err;
-      res.send("Task deleted");
-    }
-  );
+// ---------------- GET TASKS ----------------
+app.get("/tasks/:userId", (req, res) => {
+  const userId = req.params.userId;
+
+  const sql = "SELECT * FROM tasks WHERE user_id = ?";
+  db.query(sql, [userId], (err, results) => {
+    if (err) return res.send(err);
+    res.json(results);
+  });
 });
 
-// start server
+// ---------------- SERVER ----------------
 app.listen(5000, () => {
   console.log("Server running on port 5000");
 });
