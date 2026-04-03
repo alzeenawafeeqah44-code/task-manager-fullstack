@@ -6,11 +6,11 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// MySQL connection
+// 🔥 MySQL connection
 const db = mysql.createConnection({
   host: "localhost",
   user: "root",
-  password: "root", // 🔴 replace this
+  password: "root", // change if needed
   database: "taskdb"
 });
 
@@ -19,57 +19,78 @@ db.connect(err => {
   console.log("MySQL Connected...");
 });
 
-// ---------------- SIGNUP ----------------
-app.post("/signup", (req, res) => {
-  const { username, password } = req.body;
-
-  const sql = "INSERT INTO users (username, password) VALUES (?, ?)";
-  db.query(sql, [username, password], (err, result) => {
-    if (err) return res.send(err);
-    res.json({ message: "User registered!" });
-  });
-});
-
-// ---------------- LOGIN ----------------
-app.post("/login", (req, res) => {
-  const { username, password } = req.body;
-
-  const sql = "SELECT * FROM users WHERE username=? AND password=?";
-  db.query(sql, [username, password], (err, results) => {
-    if (err) return res.send(err);
-
-    if (results.length > 0) {
-      res.json({
-        message: "Login successful",
-        userId: results[0].id   // ✅ IMPORTANT
-      });
-    } else {
-      res.json({ message: "Invalid credentials" });
-    }
-  });
-});
 
 // ---------------- ADD TASK ----------------
 app.post("/tasks", (req, res) => {
   const { title, userId } = req.body;
 
-  const sql = "INSERT INTO tasks (title, completed, user_id) VALUES (?, ?, ?)";
-  db.query(sql, [title, 0, userId], (err, result) => {
-    if (err) return res.send(err);
-    res.json({ message: "Task added!" });
+  if (!title || !userId) {
+    return res.status(400).json("Missing data");
+  }
+
+  const sql = "INSERT INTO tasks (title, user_id) VALUES (?, ?)";
+
+  db.query(sql, [title, userId], (err, result) => {
+    if (err) {
+      console.log("DB Error:", err);
+      return res.status(500).json(err);
+    }
+
+    res.status(200).json({ message: "Task added successfully" });
   });
 });
+
 
 // ---------------- GET TASKS ----------------
 app.get("/tasks/:userId", (req, res) => {
   const userId = req.params.userId;
 
   const sql = "SELECT * FROM tasks WHERE user_id = ?";
+
   db.query(sql, [userId], (err, results) => {
-    if (err) return res.send(err);
+    if (err) {
+      console.log("DB Error:", err);
+      return res.status(500).json(err);
+    }
+
     res.json(results);
   });
 });
+
+
+// ---------------- DELETE TASK ----------------
+app.delete("/tasks/:id", (req, res) => {
+  const taskId = req.params.id;
+
+  const sql = "DELETE FROM tasks WHERE id = ?";
+
+  db.query(sql, [taskId], (err, result) => {
+    if (err) {
+      console.log("DB Error:", err);
+      return res.status(500).json(err);
+    }
+
+    res.json({ message: "Task deleted successfully" });
+  });
+});
+
+
+// ---------------- MARK COMPLETE ----------------
+app.put("/tasks/:id", (req, res) => {
+  const taskId = req.params.id;
+
+  const sql = "UPDATE tasks SET completed = 1 WHERE id = ?";
+
+  db.query(sql, [taskId], (err, result) => {
+    if (err) {
+      console.log("DB Error:", err);
+      return res.status(500).json(err);
+    }
+
+    res.json({ message: "Task marked as completed" });
+  });
+});
+
 
 // ---------------- SERVER ----------------
 app.listen(5000, () => {

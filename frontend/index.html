@@ -1,18 +1,45 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8">
   <title>Task Manager</title>
+
+  <!-- CSS -->
   <link rel="stylesheet" href="style.css">
+
+  <!-- 🔥 Firebase v8 -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 </head>
+
 <body>
 
-  <h1>Student Task Manager</h1>
+  <h1>✨ Task Manager</h1>
 
-  <input type="text" id="taskInput" placeholder="Enter task">
+  <!-- Login -->
+  <button onclick="loginWithGoogle()">Login with Google</button>
+
+  <hr>
+
+  <!-- Add Task -->
+  <input id="taskInput" type="text" placeholder="Enter your task..." />
   <button onclick="addTask()">Add Task</button>
 
-  <ul id="taskList"></ul>
+  <hr>
 
+  <!-- 🟢 Active Tasks Section -->
+  <div class="section-box">
+    <h2>🟢 Active Tasks</h2>
+    <ul id="taskList"></ul>
+  </div>
+
+  <!-- ✅ Completed Tasks Section -->
+  <div class="section-box">
+    <h2>✅ Completed Tasks</h2>
+    <ul id="completedList"></ul>
+  </div>
+
+  <!-- JS -->
   <script src="script.js"></script>
 
 </body>
